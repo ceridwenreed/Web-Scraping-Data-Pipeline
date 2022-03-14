@@ -12,7 +12,6 @@ import json
 from tqdm import tqdm
 import os
 from sqlalchemy import create_engine
-import psycopg2
 import boto3
 import pandas as pd
 import urllib
@@ -43,7 +42,7 @@ class BBCRecipeScraper:
         '''
         Initialises desired URL
         
-        This identifies the URL as the ChinaSichuanFood recipe site and uses Chrome webdriver 
+        This identifies the URL as the BBC recipe site and uses Chrome webdriver 
         to open it.
         '''
         #scraper init
@@ -53,6 +52,8 @@ class BBCRecipeScraper:
         self.EC = EC
         time.sleep(3)
         
+        print('Opening www.bbc.co.uk/food/recipes in background.')
+        
         #connect to s3 bucket
         self.s3_client = boto3.client(
             's3', 
@@ -60,7 +61,6 @@ class BBCRecipeScraper:
             aws_secret_access_key=secret_access_key, 
             region_name=region)
         
-        print('Opening www.bbc.co.uk/food/recipes in background.')
         
         
     def accept_cookies(self):
@@ -231,16 +231,16 @@ class BBCRecipeScraper:
             An dictionary containing all the recipe details from each link in total_links_list
         '''
         self.dict_recipe = {
-            'uuid': None,
-            'sku': None,
-            'name': None,
-            'description': None,
-            'ingredients': None,
-            'time': None, 
-            'image_url': None, 
-            'image_s3': None,
-            'recipe_url': None
-        }        
+            'uuid': [],
+            'sku': [],
+            'name': [],
+            'description': [],
+            'ingredients': [],
+            'time': [], 
+            'image_url': [], 
+            'image_s3': [],
+            'recipe_url': []
+        }
         #recipe URL
         self.dict_recipe['recipe_url'] = self.link
         #recipe name
@@ -260,7 +260,7 @@ class BBCRecipeScraper:
             self.dict_recipe['description'] = description.replace("'", "")
         except:
             #webpages do not always have descriptions
-            self.dict_recipe['description'] = None
+            pass
         #recipe total cooking time
         try:
             time_container = self.driver.find_element(
@@ -276,7 +276,7 @@ class BBCRecipeScraper:
             self.dict_recipe['image_url'] = image_tag.get_attribute('src')
         except:
             #webpages do not always have images
-            self.dict_recipe['image_url'] = None
+            pass
             
         #recipe ingredients
         try:
@@ -312,7 +312,7 @@ class BBCRecipeScraper:
                 handler.write(img_data)
             self.dict_recipe['image_s3'] = f'{self.SKU}.jpg'
         except:
-            self.dict_recipe["image_s3"] = None
+            pass
     
     
     def upload_image(self):
@@ -339,7 +339,7 @@ class BBCRecipeScraper:
                     'https://demo-aicore-bucket.s3.eu-west-2.amazonaws.com/' + f'{self.SKU}_image.jpg')
                 
             except:
-                self.dict_recipe["image_s3"] = None
+                pass
     
     
     def download_info(self):
@@ -376,7 +376,9 @@ class BBCRecipeScraper:
         recipe_url exists in the recipe_data table and appends to it if it does not. 
         '''
         #to pandas
-        self.recipe_df = pd.DataFrame.from_dict(self.dict_recipe, index=[0])
+        self.recipe_df = pd.DataFrame.from_dict(self.dict_recipe, orient='index')
+        self.recipe_df = self.recipe_df.transpose()
+        #self.recipe_df = pd.read_json(f'{self.filepath}/data.json')
         
         #connect to RDS instance on AWS
         DATABASE_TYPE = database_type
@@ -433,3 +435,6 @@ class BBCRecipeScraper:
             self.download_info()
             self.upload_to_cloud()
             self.upload_to_RDS()
+            
+            
+        print(f'{len(os.listdir("raw_recipe_data"))} urls have been scraped')
