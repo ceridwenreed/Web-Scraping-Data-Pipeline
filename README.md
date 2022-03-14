@@ -55,7 +55,7 @@ An PostgreSQL database is created to store the data and display it in tabular fo
 
 Docker is tool that containerises an application so it can run in any environment. Containerising is the process using containers to hold an application and all the dependecies within a single environment. Docker containers virtualise the operating system (OS), and provides the necessary tools to make a specific OS run without needing to install it. Docker images are the templates to run containers, and indicates the steps needed to run the container.  
 
-Docker images are built using Dockerfiles, which contains commands to build the layers of a docker image. *FROM python:3.8-slim-buster* specifies the base image, which in this instance is a version of python. *RUN* command tells Docker which additional commands to execute. To run the webscraper in a docker container, it is necessary to install Google Chrome and Chrome driver (the same version). *RUN* command is also used to install the requirements such as modules needed to run the webscraper, where a requirements.txt is generated from *pipreqs* inside the webscraper directory. *COPY* command is used to copy files from context location to current working directory inside the container. If the Dockerfile is in the same directory as the file you want to build a container for, use *COPY . .* command. Finally, *CMD* command tells Docker to execute the command when the image loads, and is used to launch the webscraper.
+Docker images are built using Dockerfiles, which contains commands to build the layers of a docker image. `FROM python:3.8-slim-buster` specifies the base image, which in this instance is a version of python. *RUN* command tells Docker which additional commands to execute. To run the webscraper in a docker container, it is necessary to install Google Chrome and Chrome driver (the same version). *RUN* command is also used to install the requirements such as modules needed to run the webscraper, where a requirements.txt is generated from *pipreqs* inside the webscraper directory. *COPY* command is used to copy files from context location to current working directory inside the container. If the Dockerfile is in the same directory as the file you want to build a container for, use *COPY . .* command. Finally, *CMD* command tells Docker to execute the command when the image loads, and is used to launch the webscraper.
 
 
 ## Milestone 6: Monitoring and Prometheus
@@ -76,8 +76,8 @@ Create an access token on DockerHub and add this to Secrets on Github. On Github
 
 ### Improvements:
 
-    - The BBC recipe site has over 10,000 recipes that can be scraped (the limiting factor of 1000 URLs can be removed, however the scraping process will take a long time, this could be achieved using cronjobs).
-    
-    - Ingredients from each recipe can be obtained in a list, which can be uploaded to RDS as separate data points. Relational model for database management can be applied in PostgreSQL to create (many-to-many relational) tables that allow a user to essentially 'filter' recipe retrieval and return recipes containing only a specific set of ingredients. A meal planner, tada!
+1. The BBC recipe site has over 10,000 recipes that can be scraped (the limiting factor of 1000 URLs can be removed, however the scraping process will take a long time, this could be achieved using cronjobs).
 
-    - This can be paired with a supermarket site scraper, where by scraping the latest 'ingredient' offers, you can plan what ingredients to buy based on both the cheaper prices and a specific recipe to use the ingredients for.  
+2. Ingredients from each recipe can be obtained in a list, which can be uploaded to RDS as separate data points. Relational model for database management can be applied in PostgreSQL to create (many-to-many relational) tables that allow a user to essentially 'filter' recipe retrieval and return recipes containing only a specific set of ingredients. A meal planner, tada!
+
+3. This can be paired with a supermarket site scraper, where by scraping the latest 'ingredient' offers, you can plan what ingredients to buy based on both the cheaper prices and a specific recipe to use the ingredients for.  
