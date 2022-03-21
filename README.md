@@ -1,9 +1,9 @@
-# BBC-Recipe-Web-Scraper
+# BBC Recipes Web Scraper
 
-## Contents of this file
-### Introduction
-### Milestones 1-7
-### Conclusion
+## Contents
+#### Introduction
+#### Milestones 1-7
+#### Conclusion
 
 
 ## Introduction
