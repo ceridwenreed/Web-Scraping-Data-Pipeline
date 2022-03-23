@@ -4,18 +4,18 @@ import requests
 import uuid
 import json
 import os
-#import boto3
 import pandas as pd
 import urllib
 import tempfile
-from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tqdm import tqdm
-from sqlalchemy import create_engine
-from storage_credentials import(s3_client, engine)
+from storage_credentials import(s3_client, 
+                                s3_bucket_name, 
+                                s3_bucket_link,
+                                engine)
 
 
 '''
@@ -97,7 +97,7 @@ class BBCRecipeScraper:
         return self.category_links
     
     
-    def get_links(self):
+    def _get_links(self):
         '''
         Obtains all the links on the current page and concatinates into list
         
@@ -139,7 +139,7 @@ class BBCRecipeScraper:
             self.driver.get(links)
             time.sleep(3)
             #obtain links for first page, otherwise cannot obtain in loop below
-            self.total_links_list.extend(self.get_links())
+            self.total_links_list.extend(self._get_links())
             #find number of pages per category
             try:
                 number_of_pages = int(self.driver.find_element(
@@ -155,7 +155,7 @@ class BBCRecipeScraper:
                     self.driver.execute_script("arguments[0].click();", next_button)
                     #wait for page to load
                     time.sleep(3)
-                    self.total_links_list.extend(self.get_links())
+                    self.total_links_list.extend(self._get_links())
                     
             #obtain 1000 recipe links
             if len(self.total_links_list) > 1000:
@@ -166,7 +166,7 @@ class BBCRecipeScraper:
         return self.total_links_list
     
     
-    def get_ingredients(self):
+    def _get_ingredients(self):
         '''
         Obtains ingredient list for each recipe, which is then appended to the 
         dict_recipe in get_details method
@@ -263,7 +263,7 @@ class BBCRecipeScraper:
             
         #recipe ingredients
         try:
-            self.dict_recipe['ingredients'] = self.get_ingredients()    
+            self.dict_recipe['ingredients'] = self._get_ingredients()    
         except:
             pass
         #UUID v4
@@ -280,7 +280,7 @@ class BBCRecipeScraper:
         This method downloads images as a jpg and the image filename is appended to the 
         dict_recipe, so each image is associated with the correct recipe in dict_recipe
         '''
-        # #user friendly ID for each recipe
+        #user friendly ID for each recipe
         self.filepath = f'raw_recipe_data/{self.SKU}'
         #check filepath exists
         if os.path.isdir(self.filepath):
@@ -309,7 +309,7 @@ class BBCRecipeScraper:
         The image's object url is appended to the dict_recipe dictionary to ensure each
         image is correctly associated with it's item and obtains a unique identifier.
         '''
-        # create temp directory to store images
+        #create temp directory to store images
         with tempfile.TemporaryDirectory() as temp_dir:
             
             src = self.dict_recipe['image_url']
@@ -317,11 +317,10 @@ class BBCRecipeScraper:
                 urllib.request.urlretrieve(src, f'{temp_dir}/{self.SKU}_image.jpg')
                 #upload images to s3 bucket
                 s3_client.upload_file(
-                    f'{temp_dir}/{self.SKU}_image.jpg', 'demo-aicore-bucket', f'{self.SKU}_image.jpg')
+                    f'{temp_dir}/{self.SKU}_image.jpg', s3_bucket_name, f'{self.SKU}_image.jpg')
                 time.sleep(1)
                 #append new image link to dict_recipe dictionary
-                self.dict_recipe["image_s3"] = (
-                    'https://demo-aicore-bucket.s3.eu-west-2.amazonaws.com/' + f'{self.SKU}_image.jpg')
+                self.dict_recipe["image_s3"] = (s3_bucket_link + f'{self.SKU}_image.jpg')
                 
             except:
                 pass
@@ -353,7 +352,7 @@ class BBCRecipeScraper:
         '''
         #upload file to s3 bucket
         s3_client.upload_file(
-            f'{self.filepath}/data.json', 'demo-aicore-bucket', f'{self.SKU}_data.json')
+            f'{self.filepath}/data.json', s3_bucket_name, f'{self.SKU}_data.json')
         
         return
     
